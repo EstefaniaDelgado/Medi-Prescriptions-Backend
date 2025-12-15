@@ -26,12 +26,18 @@ import {
 } from 'src/common/helpers/pagination.helper';
 import { generatePrescriptionCode } from '../common/utils/prescription-code.util';
 import PDFDocument from 'pdfkit';
+import { EmailService } from 'src/email/email.service';
+import { render } from '@react-email/components';
+import ConfirmPrescription from 'src/email/templates/ConfirmPrescription';
 
 @Injectable()
 export class PrescriptionsService {
   private readonly logger = new Logger(PrescriptionsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
 
   async create(
     createPrescriptionDto: CreatePrescriptionDto,
@@ -39,6 +45,7 @@ export class PrescriptionsService {
   ): Promise<Prescription> {
     try {
       return await this.prisma.$transaction(async (tx) => {
+        // Obtener el perfil de doctor del usuario
         const doctor = await tx.doctor.findUnique({
           where: { userId: authorUser.id },
         });
@@ -47,6 +54,7 @@ export class PrescriptionsService {
           throw new BadRequestException('Doctor profile not found');
         }
 
+        // Verificar que el paciente existe, no está eliminado y tiene rol de paciente
         const patient = await tx.patient.findFirst({
           where: {
             id: createPrescriptionDto.patientId,
@@ -65,8 +73,10 @@ export class PrescriptionsService {
           throw new NotFoundException('Patient not found');
         }
 
+        // Generar código único para la prescripción
         const code = await generatePrescriptionCode(tx);
 
+        // Crear la prescripción con sus items
         const prescription = await tx.prescription.create({
           data: {
             code,
@@ -109,6 +119,30 @@ export class PrescriptionsService {
           },
         });
 
+        // Enviar correo electrónico al paciente
+        // const emailTemplate = await render(
+        //   ConfirmPrescription({
+        //     prescriptionCode: prescription.code,
+        //     patientName: patient.user.name,
+        //     doctorName: prescription.author.user.name,
+        //     doctorSpecialty: doctor.specialty,
+        //     medications: prescription.items.map((item) => ({
+        //       name: item.name,
+        //       dosage: item.dosage!,
+        //       quantity: item.quantity!,
+        //       instructions: item.instructions!,
+        //     })),
+        //     notes: prescription.notes,
+        //     createdAt: prescription.createdAt.toLocaleDateString('es-ES'),
+        //   }),
+        // );
+
+        /* await this.emailService.sendMail({
+          to: patient.user.email,
+          subject: `Nueva Prescripción Médica - ${prescription.code}`,
+          html: emailTemplate,
+        }); */
+
         return prescription;
       });
     } catch (error: unknown) {
@@ -134,12 +168,14 @@ export class PrescriptionsService {
       const limit = filters.limit || 10;
       const skip = (page - 1) * limit;
 
+      // Construir condiciones de filtro
       const whereConditions: Prisma.PrescriptionWhereInput = {
         deletedAt: null,
       };
 
       if (filters.mine) {
         if (user.role === Role.doctor) {
+          // Si es doctor, obtener su perfil de doctor y filtrar por authorId
           const doctor = await this.prisma.doctor.findUnique({
             where: { userId: user.id },
           });
@@ -147,6 +183,7 @@ export class PrescriptionsService {
             whereConditions.authorId = doctor.id;
           }
         } else if (user.role === Role.patient) {
+          // Si es paciente, obtener su perfil de paciente y filtrar por patientId
           const patient = await this.prisma.patient.findUnique({
             where: { userId: user.id },
           });
@@ -155,7 +192,9 @@ export class PrescriptionsService {
           }
         }
       } else {
+        // Si no es "mine", aplicar restricciones por rol
         if (user.role === Role.patient) {
+          // Los pacientes solo pueden ver sus propias prescripciones
           const patient = await this.prisma.patient.findUnique({
             where: { userId: user.id },
           });
@@ -163,12 +202,14 @@ export class PrescriptionsService {
             whereConditions.patientId = patient.id;
           }
         }
+        // Los doctores y admins pueden ver cualquier prescripción
       }
 
       if (filters.status) {
         whereConditions.status = filters.status;
       }
 
+      // Filtro por rango de fechas
       if (filters.from || filters.to) {
         const dateFilter: Prisma.DateTimeFilter = {};
 
@@ -183,11 +224,15 @@ export class PrescriptionsService {
         whereConditions.createdAt = dateFilter;
       }
 
+      // Obtener total de registros para paginación
       const total = await this.prisma.prescription.count({
         where: whereConditions,
       });
 
+      // Validar que la página solicitada esté dentro del rango válido
       validatePagination(page, limit, total);
+
+      // Obtener prescripciones con paginación
       const prescriptions = await this.prisma.prescription.findMany({
         where: whereConditions,
         include: {
@@ -240,7 +285,9 @@ export class PrescriptionsService {
         deletedAt: null,
       };
 
+      // Aplicar restricciones por rol
       if (user.role === Role.patient) {
+        // Los pacientes solo pueden ver sus propias prescripciones
         const patient = await this.prisma.patient.findUnique({
           where: { userId: user.id },
         });
@@ -248,6 +295,8 @@ export class PrescriptionsService {
           whereConditions.patientId = patient.id;
         }
       }
+      // Los doctores y admins pueden ver cualquier prescripción
+
       const prescription = await this.prisma.prescription.findFirst({
         where: whereConditions,
         include: {
@@ -501,9 +550,11 @@ export class PrescriptionsService {
         doc.on('end', () => resolve(Buffer.concat(buffers)));
         doc.on('error', reject);
 
+        // Encabezado
         doc.fontSize(20).text('PRESCRIPCIÓN MÉDICA', { align: 'center' });
         doc.moveDown();
 
+        // Información básica
         doc
           .fontSize(12)
           .text(`Código: ${prescription.code}`)
@@ -514,6 +565,7 @@ export class PrescriptionsService {
 
         doc.moveDown();
 
+        // Medicamentos
         doc.fontSize(14).text('Medicamentos:', { underline: true });
         doc.moveDown(0.5);
 
@@ -527,6 +579,7 @@ export class PrescriptionsService {
           doc.moveDown(0.5);
         });
 
+        // Notas
         if (prescription.notes) {
           doc
             .moveDown()
