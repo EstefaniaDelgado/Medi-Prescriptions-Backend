@@ -44,6 +44,119 @@ async function hash(password: string) {
   return bcrypt.hash(password, 10);
 }
 
+// Nombres y apellidos latinos (40 cada uno) para asignar aleatoriamente
+const FIRST_NAMES = [
+  'María',
+  'José',
+  'Juan',
+  'Ana',
+  'Luis',
+  'Carlos',
+  'Jorge',
+  'Lucía',
+  'Miguel',
+  'Sofía',
+  'Diego',
+  'Isabel',
+  'Pedro',
+  'Fernanda',
+  'Andrés',
+  'Valentina',
+  'Ricardo',
+  'Paula',
+  'Alejandro',
+  'Camila',
+  'Roberto',
+  'Mariana',
+  'Rafael',
+  'Gabriela',
+  'Alberto',
+  'Elena',
+  'Manuel',
+  'Adriana',
+  'Nicolás',
+  'Daniela',
+  'Sergio',
+  'Lorena',
+  'Fernando',
+  'Claudia',
+  'Víctor',
+  'Rosa',
+  'Hugo',
+  'Mónica',
+  'Mateo',
+  'Emilia',
+];
+
+const LAST_NAMES = [
+  'García',
+  'Rodríguez',
+  'Martínez',
+  'López',
+  'Hernández',
+  'González',
+  'Pérez',
+  'Sánchez',
+  'Ramírez',
+  'Torres',
+  'Flores',
+  'Rivera',
+  'Gómez',
+  'Díaz',
+  'Morales',
+  'Romero',
+  'Ruiz',
+  'Vargas',
+  'Ortega',
+  'Castro',
+  'Rojas',
+  'Mendoza',
+  'Aguilar',
+  'Jiménez',
+  'Salazar',
+  'Navarro',
+  'Paredes',
+  'Herrera',
+  'Castillo',
+  'Molina',
+  'Cruz',
+  'Vega',
+  'Domínguez',
+  'León',
+  'Cabrera',
+  'Silva',
+  'Santana',
+  'Ibáñez',
+  'Delgado',
+  'Márquez',
+];
+
+function randomFullName() {
+  const first = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
+  const last = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)];
+  return `${first} ${last}`;
+}
+
+function normalizeNameForEmail(name: string) {
+  return name
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '.');
+}
+
+function makeUniqueEmail(base: string, used: Set<string>, domain = 'demo.com') {
+  let candidate = `${base}@${domain}`;
+  let i = 1;
+  while (used.has(candidate)) {
+    i++;
+    candidate = `${base}${i}@${domain}`;
+  }
+  used.add(candidate);
+  return candidate;
+}
 // ---------- seed ----------
 
 async function main() {
@@ -55,29 +168,60 @@ async function main() {
   await prisma.patient.deleteMany();
   await prisma.user.deleteMany();
 
+  const usedEmails = new Set<string>();
+
   // ---------- ADMIN ----------
 
   await prisma.user.create({
     data: {
       id: fakeCuid(),
-      email: 'admin@demo.com',
+      email: 'admin@test.com',
       password: await hash('admin123'),
       name: 'Admin Principal',
       role: Role.admin,
     },
   });
+  usedEmails.add('admin@test.com');
 
   // ---------- DOCTORES ----------
 
+  // Credencial de médico fijo requerida
   const doctors = [] as { userId: string; doctorId: string }[];
 
+  // Crear médico fijo: dr@test.com / dr123
+  const fixedDoctorUser = await prisma.user.create({
+    data: {
+      id: fakeCuid(),
+      email: 'dr@test.com',
+      password: await hash('dr123'),
+      name: 'Manuel Rojas',
+      role: Role.doctor,
+    },
+  });
+
+  usedEmails.add('dr@test.com');
+
+  const fixedDoctor = await prisma.doctor.create({
+    data: {
+      id: fakeCuid(),
+      userId: fixedDoctorUser.id,
+      specialty: 'Medicina General',
+    },
+  });
+
+  doctors.push({ userId: fixedDoctorUser.id, doctorId: fixedDoctor.id });
+
   for (let i = 1; i <= 10; i++) {
+    const fullName = randomFullName();
+    const baseEmail = normalizeNameForEmail(fullName);
+    const email = makeUniqueEmail(baseEmail, usedEmails, 'demo.com');
+
     const user = await prisma.user.create({
       data: {
         id: fakeCuid(),
-        email: `doctor${i}@demo.com`,
-        password: await hash('doctor123'),
-        name: `Doctor ${i}`,
+        email,
+        password: await hash('dr123'),
+        name: fullName,
         role: Role.doctor,
       },
     });
@@ -97,13 +241,41 @@ async function main() {
 
   const patients = [] as { userId: string; patientId: string }[];
 
+  // Crear paciente fijo: patient@test.com / patient123
+  const fixedPatientName = randomFullName();
+  const fixedPatientUser = await prisma.user.create({
+    data: {
+      id: fakeCuid(),
+      email: 'patient@test.com',
+      password: await hash('patient123'),
+      name: fixedPatientName,
+      role: Role.patient,
+    },
+  });
+
+  usedEmails.add('patient@test.com');
+
+  const fixedPatient = await prisma.patient.create({
+    data: {
+      id: fakeCuid(),
+      userId: fixedPatientUser.id,
+      birthDate: new Date(1990, 0, 1),
+    },
+  });
+
+  patients.push({ userId: fixedPatientUser.id, patientId: fixedPatient.id });
+
   for (let i = 1; i <= 15; i++) {
+    const fullName = randomFullName();
+    const baseEmail = normalizeNameForEmail(fullName);
+    const email = makeUniqueEmail(baseEmail, usedEmails, 'demo.com');
+
     const user = await prisma.user.create({
       data: {
         id: fakeCuid(),
-        email: `patient${i}@demo.com`,
+        email,
         password: await hash('patient123'),
-        name: `Paciente ${i}`,
+        name: fullName,
         role: Role.patient,
       },
     });

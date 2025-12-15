@@ -700,12 +700,20 @@ export class PrescriptionsService {
           where: { deletedAt: null, ...prescriptionWhere },
           _count: { createdAt: true },
         }),
-        this.prisma.prescription.groupBy({
-          by: ['authorId'],
+        this.prisma.prescription.findMany({
           where: { deletedAt: null, ...prescriptionWhere },
-          _count: { authorId: true },
-          orderBy: { _count: { authorId: 'desc' } },
-          take: 5,
+          select: {
+            authorId: true,
+            author: {
+              select: {
+                user: {
+                  select: {
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
         }),
       ]);
 
@@ -731,10 +739,23 @@ export class PrescriptionsService {
         [] as { date: string; count: number }[],
       );
 
-      const topDoctorsData = topDoctors.map((item) => ({
-        doctorId: item.authorId,
-        count: item._count.authorId,
-      }));
+      const doctorCounts = topDoctors.reduce(
+        (acc, item) => {
+          const doctorId = item.authorId;
+          const doctorName = item.author.user.name;
+          if (acc[doctorId]) {
+            acc[doctorId].count++;
+          } else {
+            acc[doctorId] = { doctorId, name: doctorName, count: 1 };
+          }
+          return acc;
+        },
+        {} as Record<string, { doctorId: string; name: string; count: number }>,
+      );
+
+      const topDoctorsData = Object.values(doctorCounts)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
 
       return {
         totals: {
