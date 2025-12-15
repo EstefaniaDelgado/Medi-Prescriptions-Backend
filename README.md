@@ -158,6 +158,22 @@ La API quedará disponible en la siguiente URL:
 
 El sistema utiliza autenticación basada en JWT (JSON Web Tokens).
 
+La autenticación se implementa utilizando **JWT (JSON Web Tokens)** junto con **cookies HTTP-Only** para mejorar la seguridad y la experiencia de usuario.
+ 
+Este esquema permite mantener sesiones sin estado en el backend, facilitando la escalabilidad y el despliegue en entornos distribuidos.
+
+Se utilizan **Access Tokens** de corta duración para proteger las rutas y **Refresh Tokens** para renovar la sesión sin necesidad de que el usuario vuelva a autenticarse, reduciendo el riesgo ante una posible filtración de credenciales.
+
+El uso de **cookies HTTP-Only** evita el acceso a los tokens desde JavaScript, mitigando ataques de tipo **XSS**, mientras que la validación del token se realiza automáticamente en cada request.
+
+El control de acceso se refuerza mediante **Guards y Decorators** de NestJS, lo que permite:
+- Proteger rutas de forma declarativa y centralizada.
+- Aplicar **RBAC (Role Based Access Control)** de manera clara y mantenible.
+- Garantizar que cada usuario solo acceda a los recursos permitidos según su rol (Admin, Doctor o Patient).
+
+Este enfoque proporciona una arquitectura **segura, escalable y alineada con buenas prácticas**, adecuada para un **MVP** pero fácilmente extensible a un entorno de producción.
+
+
 - Login mediante email y contraseña.
 - Uso de Access Token para proteger rutas.
 - Uso de Refresh Token para renovar la sesión.
