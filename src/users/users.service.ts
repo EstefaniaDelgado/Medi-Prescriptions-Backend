@@ -307,9 +307,7 @@ export class UsersService {
       });
     } catch (error: unknown) {
       if ((error as Prisma.PrismaClientKnownRequestError)?.code === 'P2002') {
-        throw new ConflictException(
-          `User with email ${updateUserDto.email} already exists`,
-        );
+        throw new ConflictException(`User with email already exists`);
       }
 
       this.logger.error('update user failed', error as Error);
