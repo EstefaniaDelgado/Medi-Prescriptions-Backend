@@ -57,14 +57,13 @@ export class DoctorsService {
       const limit = filters?.limit || 10;
       const skip = (page - 1) * limit;
 
-      // Construir condiciones de filtro
+     
       const whereConditions: Prisma.DoctorWhereInput = {
         user: {
-          deletedAt: null, // Solo doctores de usuarios no eliminados
+          deletedAt: null, 
         },
       };
 
-      // Filtro por especialidad específica
       if (filters?.specialty) {
         whereConditions.specialty = {
           contains: filters.specialty,
@@ -72,7 +71,7 @@ export class DoctorsService {
         };
       }
 
-      // Filtro por query (buscar en nombre, email del usuario o especialidad)
+      
       if (filters?.query) {
         whereConditions.OR = [
           {
@@ -100,15 +99,13 @@ export class DoctorsService {
         ];
       }
 
-      // Obtener total de registros para paginación
       const total = await this.prisma.doctor.count({
         where: whereConditions,
       });
 
-      // Validar que la página solicitada esté dentro del rango válido
+      
       validatePagination(page, limit, total);
 
-      // Obtener doctores con paginación
       const doctors = await this.prisma.doctor.findMany({
         where: whereConditions,
         include: {

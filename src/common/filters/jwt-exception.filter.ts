@@ -21,13 +21,11 @@ export class JwtExceptionFilter implements ExceptionFilter {
     let message = 'Unauthorized access';
     const status = HttpStatus.UNAUTHORIZED;
 
-    // Manejar diferentes tipos de errores JWT
     if (exception instanceof TokenExpiredError) {
       message = 'Token has expired';
     } else if (exception instanceof JsonWebTokenError) {
       message = 'Invalid token';
     } else if (exception instanceof UnauthorizedException) {
-      // Usar directamente el mensaje de la excepción sin modificarlo
       message = exception.message || 'Unauthorized access';
     }
 

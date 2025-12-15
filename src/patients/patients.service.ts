@@ -37,14 +37,13 @@ export class PatientsService {
       const limit = filters?.limit || 10;
       const skip = (page - 1) * limit;
 
-      // Construir condiciones de filtro
+     
       const whereConditions: Prisma.PatientWhereInput = {
         user: {
           deletedAt: null,
         },
       };
 
-      // Filtro por query (buscar en nombre o email del usuario)
       if (filters?.query) {
         whereConditions.OR = [
           {
@@ -66,7 +65,6 @@ export class PatientsService {
         ];
       }
 
-      // Filtro por rango de fecha de nacimiento
       if (filters?.birthDateFrom || filters?.birthDateTo) {
         const birthDateFilter: Prisma.DateTimeFilter = {};
 
@@ -81,15 +79,12 @@ export class PatientsService {
         whereConditions.birthDate = birthDateFilter;
       }
 
-      // Obtener total de registros para paginación
       const total = await this.prisma.patient.count({
         where: whereConditions,
       });
 
-      // Validar que la página solicitada esté dentro del rango válido
       validatePagination(page, limit, total);
 
-      // Obtener pacientes con paginación
       const patients = await this.prisma.patient.findMany({
         where: whereConditions,
         include: {

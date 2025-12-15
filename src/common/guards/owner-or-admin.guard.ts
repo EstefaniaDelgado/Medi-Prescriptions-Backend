@@ -23,7 +23,6 @@ export class OwnerOrAdminGuard implements CanActivate {
     const isAdmin = user.role === Role.admin;
 
     if (!isAdmin) {
-      // If it is not admin, no userId should come (because it is taken from request.user)
       if (userId && String(userId) !== String(user.id)) {
         throw new ForbiddenException(
           'Access denied: You can only update your own profile',
@@ -32,7 +31,6 @@ export class OwnerOrAdminGuard implements CanActivate {
       return true;
     }
 
-    // If it is admin and no userId is provided, we assume it is acting on itself.
     return true;
   }
 }

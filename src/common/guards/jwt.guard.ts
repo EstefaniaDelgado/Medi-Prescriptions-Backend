@@ -19,10 +19,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     info: JwtErrorInfo | undefined,
     _context: ExecutionContext,
     _status?: number,
-  ): TUser {
-    // Si hay un error o no hay usuario
+  ): TUser { 
     if (err || !user) {
-      // Verificar el tipo de error específico
       if (info?.name === 'TokenExpiredError') {
         throw new UnauthorizedException('Token has expired');
       } else if (info?.name === 'JsonWebTokenError') {
