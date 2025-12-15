@@ -222,18 +222,18 @@ Endpoint para descargar una prescripción en PDF:
 
 El PDF incluye:
 
-- Datos del paciente
-- Datos del médico
-- Fecha de creación
 - Código único de la prescripción
-- Lista de ítems:
+- Nombre del paciente
+- Nombre del médico
+- Fecha de creación
+- Lista de ítems - Medicamentos:
   - Nombre
   - Dosis
   - Cantidad
   - Instrucciones
-- Estado de la prescripción (`pending` o `consumed`)
+  - Notas
 
-**pdfkit** fue elegido para la generación de PDFs debido a que es una herramienta **ligera, minimalista y de rápida integración**, ideal para un **MVP**, ya que permite generar documentos dinámicos directamente desde el backend sin requerir plantillas complejas ni dependencias pesadas.
+**PDFKIT** fue elegido para la generación de PDFs debido a que es una herramienta **ligera, minimalista y de rápida integración**, ideal para un **MVP**, ya que permite generar documentos dinámicos directamente desde el backend sin requerir plantillas complejas ni dependencias pesadas.
 
 
 ---
