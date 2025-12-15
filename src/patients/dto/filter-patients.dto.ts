@@ -10,7 +10,7 @@ import { Type } from 'class-transformer';
 export class FilterPatientsDto {
   @IsOptional()
   @IsString()
-  query?: string; // Para buscar por nombre o email del usuario
+  query?: string; 
 
   @IsOptional()
   @IsDateString()

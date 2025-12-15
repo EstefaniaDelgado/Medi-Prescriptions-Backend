@@ -4,11 +4,11 @@ import { Type } from 'class-transformer';
 export class FilterDoctorsDto {
   @IsOptional()
   @IsString()
-  query?: string; // Para buscar por nombre, email o especialidad
+  query?: string; 
 
   @IsOptional()
   @IsString()
-  specialty?: string; // Filtrar por especialidad específica
+  specialty?: string; 
 
   @IsOptional()
   @Type(() => Number)
