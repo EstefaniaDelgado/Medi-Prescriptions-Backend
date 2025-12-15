@@ -10,6 +10,12 @@ import {
   HttpStatus,
   Query,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { PatientsService } from './patients.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
@@ -20,6 +26,8 @@ import { Roles } from '../common/decorators/roles-decorator';
 import { apiResponse } from '../common/helpers/response.helper';
 import { Role } from 'generated/prisma/client';
 
+@ApiTags('Pacientes')
+@ApiBearerAuth()
 @Controller('patients')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class PatientsController {
@@ -32,6 +40,8 @@ export class PatientsController {
 
   @Get()
   @Roles(Role.admin, Role.doctor)
+  @ApiOperation({ summary: 'Obtener todos los pacientes' })
+  @ApiResponse({ status: 200, description: 'Pacientes obtenidos exitosamente' })
   async findAll(@Query() filters: FilterPatientsDto) {
     const patients = await this.patientsService.findAll(filters);
     return apiResponse(

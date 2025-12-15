@@ -13,6 +13,12 @@ import {
   Put,
   Res,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { type Response } from 'express';
 import { PrescriptionsService } from './prescriptions.service';
 import { CreatePrescriptionDto } from './dto/create-prescription.dto';
@@ -27,6 +33,8 @@ import { apiResponse } from '../common/helpers/response.helper';
 import { Role } from 'generated/prisma/client';
 import type { IRequest } from '../common/interfaces/request.interface';
 
+@ApiTags('Prescripciones')
+@ApiBearerAuth()
 @Controller('prescriptions')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class PrescriptionsController {
@@ -34,6 +42,8 @@ export class PrescriptionsController {
 
   @Post()
   @Roles(Role.doctor)
+  @ApiOperation({ summary: 'Crear prescripción médica' })
+  @ApiResponse({ status: 201, description: 'Prescripción creada exitosamente' })
   async create(
     @Body() createPrescriptionDto: CreatePrescriptionDto,
     @Req() req: IRequest,
@@ -51,6 +61,11 @@ export class PrescriptionsController {
 
   @Get()
   @Roles(Role.admin, Role.doctor, Role.patient)
+  @ApiOperation({ summary: 'Obtener prescripciones con filtros' })
+  @ApiResponse({
+    status: 200,
+    description: 'Prescripciones obtenidas exitosamente',
+  })
   async findAll(
     @Query() filters: FilterPrescriptionsDto,
     @Req() req: IRequest,
@@ -68,6 +83,11 @@ export class PrescriptionsController {
 
   @Get(':id')
   @Roles(Role.admin, Role.doctor, Role.patient)
+  @ApiOperation({ summary: 'Obtener prescripción por ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Prescripción obtenida exitosamente',
+  })
   async findOne(@Param('id') id: string, @Req() req: IRequest) {
     const prescription = await this.prescriptionsService.findOne(id, req.user);
     return apiResponse(
@@ -92,6 +112,11 @@ export class PrescriptionsController {
 
   @Get('me/prescriptions')
   @Roles(Role.patient)
+  @ApiOperation({ summary: 'Obtener mis prescripciones (paciente)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Prescripciones del paciente obtenidas exitosamente',
+  })
   async findMyPrescriptions(
     @Query() filters: FilterPrescriptionsDto,
     @Req() req: IRequest,
@@ -109,6 +134,11 @@ export class PrescriptionsController {
 
   @Put(':id/consume')
   @Roles(Role.patient)
+  @ApiOperation({ summary: 'Marcar prescripción como consumida' })
+  @ApiResponse({
+    status: 200,
+    description: 'Prescripción marcada como consumida',
+  })
   async consumePrescription(@Param('id') id: string, @Req() req: IRequest) {
     const prescription = await this.prescriptionsService.consumePrescription(
       id,
@@ -123,6 +153,12 @@ export class PrescriptionsController {
 
   @Get(':id/pdf')
   @Roles(Role.patient)
+  @ApiOperation({ summary: 'Descargar PDF de prescripción' })
+  @ApiResponse({
+    status: 200,
+    description: 'PDF generado exitosamente',
+    schema: { type: 'string', format: 'binary' },
+  })
   async downloadPrescriptionPdf(
     @Param('id') id: string,
     @Req() req: IRequest,
@@ -143,6 +179,11 @@ export class PrescriptionsController {
 
   @Get('admin/prescriptions')
   @Roles(Role.admin)
+  @ApiOperation({ summary: 'Obtener todas las prescripciones (admin)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Prescripciones obtenidas exitosamente',
+  })
   async findAllForAdmin(@Query() filters: AdminFilterPrescriptionsDto) {
     const prescriptions =
       await this.prescriptionsService.findAllForAdmin(filters);
@@ -155,6 +196,8 @@ export class PrescriptionsController {
 
   @Get('admin/metrics')
   @Roles(Role.admin)
+  @ApiOperation({ summary: 'Obtener métricas del sistema (admin)' })
+  @ApiResponse({ status: 200, description: 'Métricas obtenidas exitosamente' })
   async getMetrics(@Query() filters: AdminMetricsDto) {
     const metrics = await this.prescriptionsService.getMetrics(filters);
     return apiResponse(

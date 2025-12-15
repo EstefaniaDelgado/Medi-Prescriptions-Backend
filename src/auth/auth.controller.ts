@@ -9,6 +9,12 @@ import {
   Res,
   HttpStatus,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from '../common/guards/local.guard';
 import { JwtAuthGuard } from '../common/guards/jwt.guard';
@@ -22,6 +28,7 @@ import { AuthCookiesHelper } from 'src/common/helpers/auth-cookies.helper';
 import { Role } from 'generated/prisma/client';
 import { AuthRegisterDto } from './dto/auth-register.dto';
 
+@ApiTags('Autenticación')
 @Controller('auth')
 export class AuthController {
   private readonly oneHour = 60 * 60 * 1000;
@@ -37,6 +44,8 @@ export class AuthController {
   ) {}
 
   @Post('register/patient')
+  @ApiOperation({ summary: 'Registrar paciente' })
+  @ApiResponse({ status: 201, description: 'Paciente registrado exitosamente' })
   async registerPatient(
     @Body() registerUserDto: AuthRegisterDto,
     @Res({ passthrough: true }) res: Response,
@@ -60,6 +69,8 @@ export class AuthController {
   }
 
   @Post('register/doctor')
+  @ApiOperation({ summary: 'Registrar doctor' })
+  @ApiResponse({ status: 201, description: 'Doctor registrado exitosamente' })
   async registerDoctor(
     @Body() registerUserDto: AuthRegisterDto,
     @Res({ passthrough: true }) res: Response,
@@ -83,6 +94,8 @@ export class AuthController {
   }
 
   @Post('login')
+  @ApiOperation({ summary: 'Iniciar sesión' })
+  @ApiResponse({ status: 200, description: 'Login exitoso' })
   @UseGuards(LocalAuthGuard)
   login(@Request() req: IRequest, @Res({ passthrough: true }) res: Response) {
     const { accessToken, refreshToken } = this.authService.login(req.user);
@@ -99,6 +112,8 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @ApiOperation({ summary: 'Refrescar token' })
+  @ApiResponse({ status: 201, description: 'Token refrescado exitosamente' })
   @UseGuards(JwtRefreshAuthGuard)
   refreshToken(
     @Req() req: IRequest,
@@ -117,6 +132,8 @@ export class AuthController {
   }
 
   @Post('logout')
+  @ApiOperation({ summary: 'Cerrar sesión' })
+  @ApiResponse({ status: 200, description: 'Sesión cerrada exitosamente' })
   logout(@Res({ passthrough: true }) res: Response) {
     this.authCookieHelper.clearCookies(res);
     return apiResponse(null, 'User logged out successfully', 200);
@@ -125,6 +142,9 @@ export class AuthController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.admin, Role.patient, Role.doctor)
   @Get('profile')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Obtener perfil del usuario autenticado' })
+  @ApiResponse({ status: 200, description: 'Perfil obtenido exitosamente' })
   async getMe(@Req() req: IRequest) {
     const user = await this.authService.getMe(req);
 
