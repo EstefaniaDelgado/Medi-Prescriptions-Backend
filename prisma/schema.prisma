@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  password  String
+  name      String
+  role      Role
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  // perfiles (opcional):
+  doctor  Doctor?
+  patient Patient?
+
+  @@index([role])
+  @@map("users")
+}
+
+enum Role {
+  admin
+  doctor
+  patient
+}
+
+model Doctor {
+  id            String         @id @default(cuid())
+  user          User           @relation(fields: [userId], references: [id])
+  userId        String         @unique
+  specialty     String?
+  prescriptions Prescription[] @relation("AuthoredBy")
+  deletedAt     DateTime?
+
+  @@map("doctors")
+}
+
+model Patient {
+  id            String         @id @default(cuid())
+  user          User           @relation(fields: [userId], references: [id])
+  userId        String         @unique
+  birthDate     DateTime?
+  prescriptions Prescription[]
+  deletedAt     DateTime?
+
+  @@map("patients")
+}
+
+model Prescription {
+  id         String             @id @default(cuid())
+  code       String             @unique // para mostrar o QR en PDF 
+  status     PrescriptionStatus @default(pending)
+  notes      String?
+  createdAt  DateTime           @default(now())
+  consumedAt DateTime?
+  deletedAt  DateTime?
+
+  // relaciones 
+  patient   Patient            @relation(fields: [patientId], references: [id])
+  patientId String
+  author    Doctor             @relation("AuthoredBy", fields: [authorId], references: [id])
+  authorId  String
+  items     PrescriptionItem[]
+
+  @@index([patientId])
+  @@index([authorId])
+  @@index([createdAt, status])
+  @@index([patientId, status]) // índice compuesto
+  @@map("prescriptions")
+}
+
+enum PrescriptionStatus {
+  pending
+  consumed
+}
+
+model PrescriptionItem {
+  id             String       @id @default(cuid())
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id])
+  prescriptionId String
+  name           String // Producto digitado manualmente
+  dosage         String?
+  quantity       Int? // unidades indicadas
+  instructions   String?
+
+  @@map("prescription_items")
+}
