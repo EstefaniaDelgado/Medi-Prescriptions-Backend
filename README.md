@@ -1,98 +1,249 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Backend – App de Prescripciones Médicas
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API backend para una aplicación de gestión de prescripciones médicas desarrollada como prueba técnica full-stack.  
+El sistema implementa autenticación segura, control de acceso por roles y generación de PDFs.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🧩 Stack Tecnológico
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- NestJS
+- TypeScript
+- Prisma ORM
+- PostgreSQL
+- JWT (Access Token + Refresh Token)
+- RBAC (Role Based Access Control)
+- PDF generation (**pdfkit**)
+- Jest + Supertest
 
-## Project setup
+---
 
-```bash
-$ npm install
+## 🎯 Descripción General
+
+Sistema de prescripciones médicas con tres roles principales:
+
+### Roles
+
+- **Admin**
+  - Acceso total al sistema
+  - Visualización de métricas
+- **Doctor**
+  - Creación de prescripciones para pacientes
+  - Visualización de sus propias prescripciones
+- **Patient**
+  - Visualización de sus prescripciones
+  - Marcado de prescripciones como consumidas
+  - Descarga de prescripciones en PDF
+
+### Estados
+
+- Prescripción:
+  - `pending`
+  - `consumed`
+
+---
+
+## 📁 Estructura del Proyecto
+
+src/
+├── main.ts
+├── app.module.ts
+├── auth/
+│ ├── auth.module.ts
+│ ├── auth.controller.ts
+│ ├── auth.service.ts
+│ ├── jwt.strategy.ts
+│ ├── refresh.strategy.ts
+│ └── roles.guard.ts
+├── users/
+│ ├── users.module.ts
+│ ├── users.controller.ts
+│ └── users.service.ts
+├── doctors/
+├── patients/
+├── prescriptions/
+│ ├── prescriptions.module.ts
+│ ├── prescriptions.controller.ts
+│ ├── prescriptions.service.ts
+│ └── dto/
+├── common/
+│ ├── guards/
+│ ├── filters/
+│ └── interceptors/
+└── prisma/
+├── prisma.module.ts
+├── prisma.service.ts
+└── schema.prisma
+
+
+---
+
+## 🗄️ Base de Datos
+
+- PostgreSQL
+- ORM: Prisma
+- Migraciones con Prisma Migrate
+- Seed con datos de prueba
+
+Relaciones principales:
+- Usuarios con rol (`admin`, `doctor`, `patient`)
+- Prescripciones asociadas a médicos y pacientes
+- Ítems digitados manualmente por prescripción
+
+---
+
+## ⚙️ Variables de Entorno
+
+Crear archivo `.env` en la raíz del proyecto:
+
+```env
+PORT=3001
+DATABASE_URL="postgresql://user:password@localhost:5432/prescriptions_db?schema=public"
+JWT_ACCESS_SECRET=your_access_secret
+JWT_REFRESH_SECRET=your_refresh_secret
+JWT_ACCESS_TTL=900s
+JWT_REFRESH_TTL=7d
+APP_ORIGIN=http://localhost:3000
 ```
 
-## Compile and run the project
+## 🚀 Instalación y Ejecución Local
 
-```bash
-# development
-$ npm run start
+### 1. Instalar dependencias
 
-# watch mode
-$ npm run start:dev
+Comando para instalar todas las dependencias del proyecto:
 
-# production mode
-$ npm run start:prod
-```
+    npm install
 
-## Run tests
+---
 
-```bash
-# unit tests
-$ npm run test
+### 2. Ejecutar migraciones de base de datos
 
-# e2e tests
-$ npm run test:e2e
+Aplica las migraciones de Prisma y crea las tablas en la base de datos:
 
-# test coverage
-$ npm run test:cov
-```
+    npx prisma migrate dev
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### 3. Ejecutar seed (datos de prueba)
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Ejecuta el script de seed para poblar la base de datos con información inicial:
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+    npx prisma db seed
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Esto crea automáticamente los siguientes usuarios de prueba:
 
-## Resources
+| Rol     | Email              | Password  |
+|---------|--------------------|-----------|
+| Admin   | admin@test.com     | admin123  |
+| Doctor  | dr@test.com        | dr123     |
+| Patient | patient@test.com   | patient123 |
 
-Check out a few resources that may come in handy when working with NestJS:
+También se generan prescripciones de ejemplo en estado `pending` y `consumed`.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
-## Support
+### 4. Levantar el servidor en desarrollo
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Inicia el servidor en modo desarrollo:
 
-## Stay in touch
+    npm run start:dev
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+La API quedará disponible en la siguiente URL:
 
-## License
+    http://localhost:3001
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+## 🔐 Autenticación y Autorización
+
+El sistema utiliza autenticación basada en JWT (JSON Web Tokens).
+
+- Login mediante email y contraseña.
+- Uso de Access Token para proteger rutas.
+- Uso de Refresh Token para renovar la sesión.
+- Control de acceso por roles (RBAC) mediante Guards y Decorators.
+
+Restricciones por rol:
+
+- Doctor: solo puede crear y ver sus propias prescripciones.
+- Patient: solo puede ver, consumir y descargar sus propias prescripciones.
+- Admin: acceso completo al sistema y a las métricas.
+
+---
+
+## 📌 Endpoints Principales
+
+### Auth
+
+    POST /auth/login
+    POST /auth/refresh
+    GET  /auth/profile
+
+### Prescripciones – Doctor
+
+    POST /prescriptions
+    GET  /prescriptions?mine=true
+    GET  /prescriptions/:id
+
+### Prescripciones – Patient
+
+    GET  /me/prescriptions
+    PUT  /prescriptions/:id/consume
+    GET  /prescriptions/:id/pdf
+
+### Admin
+
+    GET /admin/prescriptions
+    GET /admin/metrics
+
+---
+
+## 📄 Generación de PDF
+
+Endpoint para descargar una prescripción en PDF:
+
+    GET /prescriptions/:id/pdf
+
+El PDF incluye:
+
+- Datos del paciente
+- Datos del médico
+- Fecha de creación
+- Código único de la prescripción
+- Lista de ítems:
+  - Nombre
+  - Dosis
+  - Cantidad
+  - Instrucciones
+- Estado de la prescripción (`pending` o `consumed`)
+
+**pdfkit** fue elegido para la generación de PDFs debido a que es una herramienta **ligera, minimalista y de rápida integración**, ideal para un **MVP**, ya que permite generar documentos dinámicos directamente desde el backend sin requerir plantillas complejas ni dependencias pesadas.
+
+
+---
+
+## 🧪 Testing
+
+El proyecto incluye pruebas unitarias y e2e básicas.
+
+Comando para ejecutar los tests:
+
+    npm run test
+
+---
+
+## 🛡️ Seguridad y Buenas Prácticas
+
+- Validación de DTOs con class-validator.
+- Serialización con class-transformer.
+- Manejo centralizado de errores.
+- Tokens JWT con expiración.
+- Control de acceso por roles.
+- Configuración básica de CORS y seguridad.
+
+---
+
+## 📜 Licencia
+
+Proyecto desarrollado como prueba técnica full-stack.
+
