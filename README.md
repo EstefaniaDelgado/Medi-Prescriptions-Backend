@@ -41,40 +41,6 @@ Sistema de prescripciones médicas con tres roles principales:
   - `pending`
   - `consumed`
 
----
-
-## 📁 Estructura del Proyecto
-
-src/
-├── main.ts
-├── app.module.ts
-├── auth/
-│ ├── auth.module.ts
-│ ├── auth.controller.ts
-│ ├── auth.service.ts
-│ ├── jwt.strategy.ts
-│ ├── refresh.strategy.ts
-│ └── roles.guard.ts
-├── users/
-│ ├── users.module.ts
-│ ├── users.controller.ts
-│ └── users.service.ts
-├── doctors/
-├── patients/
-├── prescriptions/
-│ ├── prescriptions.module.ts
-│ ├── prescriptions.controller.ts
-│ ├── prescriptions.service.ts
-│ └── dto/
-├── common/
-│ ├── guards/
-│ ├── filters/
-│ └── interceptors/
-└── prisma/
-├── prisma.module.ts
-├── prisma.service.ts
-└── schema.prisma
-
 
 ---
 
@@ -103,6 +69,8 @@ JWT_ACCESS_SECRET=your_access_secret
 JWT_REFRESH_SECRET=your_refresh_secret
 JWT_ACCESS_TTL=900s
 JWT_REFRESH_TTL=7d
+COOKIE_ACCESS_TTL=900000
+COOKIE_REFRESH_TTL=604800000
 APP_ORIGIN=http://localhost:3000
 ```
 
@@ -126,9 +94,17 @@ Aplica las migraciones de Prisma y crea las tablas en la base de datos:
 
 ### 3. Ejecutar seed (datos de prueba)
 
-Ejecuta el script de seed para poblar la base de datos con información inicial:
+1. Ejecutar las migraciones con :
 
-    npx prisma db seed
+    npx prisma migrate dev
+
+2. Compilar el código:
+    
+    npm run build
+
+3. Ejecuta el script de seed para poblar la base de datos con información inicial:
+
+    node -r dotenv/config dist/prisma/seed.js
 
 Esto crea automáticamente los siguientes usuarios de prueba:
 
@@ -235,16 +211,6 @@ El PDF incluye:
 
 **PDFKIT** fue elegido para la generación de PDFs debido a que es una herramienta **ligera, minimalista y de rápida integración**, ideal para un **MVP**, ya que permite generar documentos dinámicos directamente desde el backend sin requerir plantillas complejas ni dependencias pesadas.
 
-
----
-
-## 🧪 Testing
-
-El proyecto incluye pruebas unitarias y e2e básicas.
-
-Comando para ejecutar los tests:
-
-    npm run test
 
 ---
 
