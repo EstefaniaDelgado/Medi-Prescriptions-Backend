@@ -214,6 +214,20 @@ El PDF incluye:
 
 ---
 
+## 📂Documentación de Endpoints
+
+La documentación de los endpoinst con Swagger se encuentra en el siguiente link:
+
+  [Documentacion Swagger](https://medi-prescriptions-backend.onrender.com/swagger)
+
+---
+
+Adicionalmente la documentación de Postman en formato JSON esta en la siguiente dirección:
+
+  [Documentación Postman](./docs/Prescriptions.postman_collection.json)
+
+---  
+
 ## 🛡️ Seguridad y Buenas Prácticas
 
 - Validación de DTOs con class-validator.
