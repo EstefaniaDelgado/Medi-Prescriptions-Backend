@@ -28,19 +28,23 @@ export class AuthCookiesHelper {
     value: string,
     maxAge: number,
   ) {
+    const isProduction = process.env.NODE_ENV === 'production';
+
     res.cookie(cookieName, value, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       maxAge,
     });
   }
 
   clearCookie(res: Response, cookieName: CookieName) {
+    const isProduction = process.env.NODE_ENV === 'production';
+
     res.clearCookie(cookieName, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
     });
   }
 }
